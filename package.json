@@ -1,0 +1,28 @@
+{
+  "name": "@hexlet/code",
+  "version": "1.0.0",
+  "description": "[![Actions Status](https://github.com/sshvasi/fullstack-javascript-project-lvl3/workflows/hexlet-check/badge.svg)](https://github.com/sshvasi/fullstack-javascript-project-lvl3/actions)",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "npx -n '--experimental-vm-modules --no-warnings' jest --colors"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sshvasi/fullstack-javascript-project-lvl3.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sshvasi/fullstack-javascript-project-lvl3/issues"
+  },
+  "homepage": "https://github.com/sshvasi/fullstack-javascript-project-lvl3#readme",
+  "devDependencies": {
+    "eslint": "^8.21.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jest": "^26.7.0",
+    "jest": "^28.1.3"
+  }
+}
