@@ -7,6 +7,9 @@
   "scripts": {
     "test": "npx -n '--experimental-vm-modules --no-warnings' jest --colors"
   },
+  "bin": {
+    "page-loader": "bin/pageloader.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sshvasi/fullstack-javascript-project-lvl3.git"
