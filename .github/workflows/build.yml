@@ -1,41 +1,21 @@
-name: build
-
-on: 
-  - push
-  - pull_request
-
+name: node
+on: push
 jobs:
-  build:
+  lint-and-test:
     runs-on: ubuntu-latest
-
     strategy:
-      matrix:
-        node-version: [14.x]
-
+    matrix:
+      node: [ 14, 16, 18 ]
     steps:
-      - uses: actions/checkout@v2
-      
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: npm install
-        run: |
-          make install
-        env:
-          CI: true
-
-      - name: run linter
-        run: |
-          make lint
-        
-      - name: run tests
-        run: |
-          make test
-          
-      - name: Test & publish code coverage
-        uses: paambaati/codeclimate-action@v2.7.4
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+      - run: make install
+      - run: make lint
+      - run: make test
+      - uses: paambaati/codeclimate-action@v2.7.4
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
         with:
