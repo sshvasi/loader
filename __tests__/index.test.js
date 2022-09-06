@@ -21,24 +21,28 @@ const pageURL = new URL(PAGE_PATH, BASE_URL);
 const pageURLBefore = new URL(PAGE_PATH_BEFORE, BASE_URL);
 const imgURL = new URL(IMG_PATH, BASE_URL);
 
-const filename = pageURLToName(pageURL, '.html');
+const filename = pageURLToName(pageURL);
+const filenameBefore = pageURLToName(pageURLBefore);
 const imgname = pageURLToName(imgURL, '.png');
 const dirname = pageURLToName(pageURL, '_files');
 
 let tmpDirpath;
 let fileContent;
+let fileContentBefore;
 let imgContent;
 
 nock.disableNetConnect();
 
 beforeAll(async () => {
   fileContent = await readFixtureFile('.', filename);
+  fileContentBefore = await readFixtureFile('.', filenameBefore);
   imgContent = await readFixtureFile(dirname, imgname);
 });
 
 beforeEach(async () => {
   tmpDirpath = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-  nock(BASE_URL).get(PAGE_PATH_BEFORE).reply(200, fileContent);
+
+  nock(BASE_URL).get(PAGE_PATH_BEFORE).reply(200, fileContentBefore);
   nock(BASE_URL).get(PAGE_PATH).reply(200, fileContent);
 });
 
@@ -50,18 +54,21 @@ describe('pageLoader', () => {
 
   it('should download page and save it in output dir', async () => {
     await pageLoader(pageURL, tmpDirpath);
+
     const actualFileContent = await fs.readFile(path.join(tmpDirpath, filename), 'utf-8');
     expect(actualFileContent).toBe(fileContent);
   });
 
   it('should download page images and save they in <output_dir>_files dir', async () => {
     await pageLoader(pageURL, tmpDirpath);
+
     const actualImageContent = await fs.readFile(path.join(tmpDirpath, dirname, imgname), 'utf-8');
     expect(actualImageContent).toBe(imgContent);
   });
 
   it('should change link paths for resources after loading page', async () => {
     await pageLoader(pageURLBefore, tmpDirpath);
+
     const actualFileContent = await fs.readFile(path.join(tmpDirpath, filename), 'utf-8');
     expect(actualFileContent).toBe(fileContent);
   });
