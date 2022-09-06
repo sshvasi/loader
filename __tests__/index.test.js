@@ -1,29 +1,68 @@
+import url from 'url';
 import os from 'os';
 import path from 'path';
 import fs from 'fs/promises';
 import nock from 'nock';
+import { pageURLToName } from '../src/index.js';
 import pageLoader from '../index.js';
+
+const __filename = url.fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const getFixturePath = (...paths) => path.join(__dirname, '..', '__fixtures__', ...paths);
+const readFixtureFile = (dirname, filename) => fs.readFile(getFixturePath(dirname, filename), 'utf-8');
+
+const BASE_URL = 'https://ru.hexlet.io';
+const PAGE_PATH = '/courses';
+const PAGE_PATH_BEFORE = '/courses/before';
+const IMG_PATH = '/assets/professions/nodejs';
+
+const pageURL = new URL(PAGE_PATH, BASE_URL);
+const pageURLBefore = new URL(PAGE_PATH_BEFORE, BASE_URL);
+const imgURL = new URL(IMG_PATH, BASE_URL);
+
+const filename = pageURLToName(pageURL, '.html');
+const imgname = pageURLToName(imgURL, '.png');
+const dirname = pageURLToName(pageURL, '_files');
+
+let tmpDirpath;
+let fileContent;
+let imgContent;
 
 nock.disableNetConnect();
 
-let tmpDirPath;
-
-const baseUrl = 'https://ru.hexlet.io';
-const pagePath = '/courses';
-const pageUrl = new URL(pagePath, baseUrl);
-const fileName = 'ru-hexlet-io-courses.html';
-const fileContent = 'Каталог курсов по программированию на Хекслете';
-
-beforeEach(async () => {
-  tmpDirPath = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+beforeAll(async () => {
+  fileContent = await readFixtureFile('.', filename);
+  imgContent = await readFixtureFile(dirname, imgname);
 });
 
-test('pageLoad() download page and write its content in file', async () => {
-  nock(baseUrl).get(pagePath).reply(200, fileContent);
+beforeEach(async () => {
+  tmpDirpath = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+  nock(BASE_URL).get(PAGE_PATH_BEFORE).reply(200, fileContent);
+  nock(BASE_URL).get(PAGE_PATH).reply(200, fileContent);
+});
 
-  const actualFileName = await pageLoader(pageUrl, tmpDirPath);
-  expect(actualFileName).toBe(fileName);
+describe('pageLoader', () => {
+  it('should create html file with correct name', async () => {
+    const actualFilename = await pageLoader(pageURL, tmpDirpath);
+    expect(actualFilename).toBe(filename);
+  });
 
-  const actualFileContent = await fs.readFile(path.resolve(tmpDirPath, fileName), 'utf-8');
-  expect(actualFileContent).toBe(fileContent);
+  it('should download page and save it in output dir', async () => {
+    await pageLoader(pageURL, tmpDirpath);
+    const actualFileContent = await fs.readFile(path.join(tmpDirpath, filename), 'utf-8');
+    expect(actualFileContent).toBe(fileContent);
+  });
+
+  it('should download page images and save they in <output_dir>_files dir', async () => {
+    await pageLoader(pageURL, tmpDirpath);
+    const actualImageContent = await fs.readFile(path.join(tmpDirpath, dirname, imgname), 'utf-8');
+    expect(actualImageContent).toBe(imgContent);
+  });
+
+  it('should change link paths for resources after loading page', async () => {
+    await pageLoader(pageURLBefore, tmpDirpath);
+    const actualFileContent = await fs.readFile(path.join(tmpDirpath, filename), 'utf-8');
+    expect(actualFileContent).toBe(fileContent);
+  });
 });
