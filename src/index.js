@@ -1,27 +1,24 @@
-import path from 'path';
-import fs from 'fs/promises';
-import axios from 'axios';
+import {
+  urlToFilename,
+  createPath,
+  writeFile,
+  get,
+  processImages,
+  loadImages,
+  makeAssetsDir,
+} from './utils.js';
 
-const pageURLToName = (url, postfix = '.html') => {
-  const { hostname, pathname } = url;
-  const filename = `${hostname}${pathname}`.replace(/\W/g, '-');
+const loadPage = async (url, outputDirpath = process.cwd()) => {
+  const pageFilename = urlToFilename(url);
+  const pageFilepath = createPath(outputDirpath, pageFilename);
+  const html = await get(url);
+  const [page, paths] = processImages(html, url);
 
-  return `${filename}${postfix}`;
+  await makeAssetsDir(url, outputDirpath);
+  await loadImages(paths, outputDirpath);
+  await writeFile(pageFilepath, page);
+
+  return pageFilename;
 };
 
-const writeFile = (dirpath, filename, content) => {
-  const filepath = path.resolve(dirpath, filename);
-
-  return fs.writeFile(filepath, content);
-};
-
-const loadPage = (url, dirpath = process.cwd()) => {
-  const { href } = url;
-  const filename = pageURLToName(url);
-
-  return axios.get(href)
-    .then(({ data }) => writeFile(dirpath, filename, data))
-    .then(() => filename);
-};
-
-export { pageURLToName, loadPage };
+export default loadPage;
