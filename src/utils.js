@@ -1,13 +1,14 @@
 import path from 'path';
 import fs from 'fs/promises';
 import axios from 'axios';
-import { load } from 'cheerio';
-import { format } from 'prettier';
+import cheerio from 'cheerio';
+import prettier from 'prettier';
 
 const formatName = (name, replacer = '-') => name.replace(/\W/g, replacer);
 
 const parseUrl = (url) => {
   const { hostname, pathname } = url;
+
   return path.parse(`${hostname}${pathname}`);
 };
 
@@ -31,7 +32,12 @@ const createPath = (dirpath, filename) => path.join(dirpath, filename);
 const makeAssetsDir = async (url, dest) => {
   const assetsDirname = urlToDirname(url);
   const assetsDirpath = createPath(dest, assetsDirname);
-  await fs.mkdir(assetsDirpath);
+
+  try {
+    await fs.access(assetsDirpath);
+  } catch {
+    await fs.mkdir(assetsDirpath);
+  }
 };
 
 const writeFile = (filepath, content) => fs.writeFile(filepath, content);
@@ -45,35 +51,50 @@ const get = async (url, options = {}) => {
   return data;
 };
 
-const processImages = (markup, url) => {
+const processAssets = (markup, url) => {
   const { origin } = url;
-  const assetsDirname = urlToDirname(url);
+  const $ = cheerio.load(markup);
 
-  const $ = load(markup);
-  const images = $('img[src]').toArray();
+  const assetTypes = {
+    link: 'href',
+    script: 'src',
+    img: 'src',
+  };
 
-  const paths = images.map((img) => {
-    const sourcePath = $(img).attr('src');
-    const imgUrl = getUrl(sourcePath, origin);
-    const filename = urlToFilename(imgUrl);
-    const relativePath = createPath(assetsDirname, filename);
+  const assetPaths = Object.entries(assetTypes).flatMap(([tag, attribute]) => {
+    const assets = $(`${tag}[${attribute}]`).toArray();
+    const localAssets = assets.filter((element) => {
+      const sourcePath = $(element).attr(attribute);
+      const assetUrl = getUrl(sourcePath, origin);
 
-    $(img).attr('src', relativePath);
+      return assetUrl.origin === origin;
+    });
 
-    return { imgUrl, relativePath };
+    const paths = localAssets.map((element) => {
+      const sourcePath = $(element).attr(attribute);
+      const assetUrl = getUrl(sourcePath, origin);
+      const filename = urlToFilename(assetUrl);
+      const assetsDirname = urlToDirname(url);
+      const relativePath = createPath(assetsDirname, filename);
+
+      $(element).attr(attribute, relativePath);
+
+      return { assetUrl, relativePath };
+    });
+
+    return paths;
   });
 
-  const page = format($.html(), { parser: 'html' });
+  const page = prettier.format($.html(), { parser: 'html' });
 
-  return [page, paths];
+  return [page, assetPaths];
 };
 
-const loadImages = async (paths, dest) => {
-  const promises = paths.map(({ imgUrl, relativePath }) => {
+const loadAssets = async (paths, dest) => {
+  const promises = paths.map(({ assetUrl, relativePath }) => {
     const absolutePath = createPath(dest, relativePath);
-    return get(imgUrl, { responseType: 'arraybuffer' }).then((data) =>
-      writeFile(absolutePath, data)
-    );
+    return get(assetUrl, { responseType: 'arraybuffer' })
+      .then((data) => writeFile(absolutePath, data));
   });
   const results = await Promise.all(promises);
 
@@ -88,6 +109,6 @@ export {
   writeFile,
   getUrl,
   get,
-  processImages,
-  loadImages,
+  processAssets,
+  loadAssets,
 };
