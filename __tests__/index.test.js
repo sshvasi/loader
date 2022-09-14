@@ -3,7 +3,7 @@ import os from 'os';
 import path from 'path';
 import fs from 'fs/promises';
 import nock from 'nock';
-import { urlToDirname, urlToFilename, createPath } from '../src/utils.js';
+import { urlToDirname, urlToFilename, buildPath } from '../src/paths.js';
 import pageLoader from '../index.js';
 
 const __filename = url.fileURLToPath(import.meta.url);
@@ -24,17 +24,17 @@ const assetsInfo = [
   {
     format: 'png',
     urlPath: '/assets/professions/nodejs.png',
-    filepath: createPath(assetsDirname, 'ru-hexlet-io-assets-professions-nodejs.png'),
+    filepath: buildPath(assetsDirname, 'ru-hexlet-io-assets-professions-nodejs.png'),
   },
   {
     format: 'css',
     urlPath: '/assets/application.css',
-    filepath: createPath(assetsDirname, 'ru-hexlet-io-assets-application.css'),
+    filepath: buildPath(assetsDirname, 'ru-hexlet-io-assets-application.css'),
   },
   {
     format: 'js',
     urlPath: '/packs/js/runtime.js',
-    filepath: createPath(assetsDirname, 'ru-hexlet-io-packs-js-runtime.js'),
+    filepath: buildPath(assetsDirname, 'ru-hexlet-io-packs-js-runtime.js'),
   },
 ];
 const formats = assetsInfo.map(({ format }) => format);
@@ -81,6 +81,6 @@ describe('pageLoader', () => {
       const actualFileContent = await fs.readFile(path.join(tmpDirpath, filepath), 'utf-8');
 
       expect(actualFileContent).toBe(content);
-    }
+    },
   );
 });

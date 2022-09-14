@@ -1,5 +1,3 @@
-import loadPage from './src/index.js';
+import pageLoader from './src/index.js';
 
-const pageLoader = (url, output = process.cwd()) => loadPage(new URL(url), output);
-
-export default pageLoader;
+export default (url, outputDirpath = process.cwd()) => pageLoader(new URL(url), outputDirpath);

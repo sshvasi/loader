@@ -1,26 +1,21 @@
-import {
-  urlToFilename,
-  createPath,
-  writeFile,
-  get,
-  processAssets,
-  loadAssets,
-  makeAssetsDir,
-} from './utils.js';
+import { load } from './url.js';
+import { urlToFilename, buildPath } from './paths.js';
+import { writeFile, makeAssetsDir } from './fs.js';
+import { processAssets, loadAssets } from './assets.js';
 
-const loadPage = async (url, outputDirpath = process.cwd()) => {
+const pageLoader = async (url, outputDirpath = process.cwd()) => {
   const pageFilename = urlToFilename(url);
-  const pageFilepath = createPath(outputDirpath, pageFilename);
+  const pageFilepath = buildPath(outputDirpath, pageFilename);
 
-  const html = await get(url);
-
+  const html = await load(url);
   const [page, assetPaths] = processAssets(html, url);
+
+  await writeFile(pageFilepath, page);
 
   await makeAssetsDir(url, outputDirpath);
   await loadAssets(assetPaths, outputDirpath);
-  await writeFile(pageFilepath, page);
 
   return pageFilename;
 };
 
-export default loadPage;
+export default pageLoader;
