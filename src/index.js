@@ -7,7 +7,7 @@ import { processAssets, loadAssets } from './assets.js';
 const log = debug('page-loader');
 
 const pageLoader = async (url, outputDirpath = process.cwd()) => {
-  const pageFilename = urlToFilename(url);
+  const pageFilename = urlToFilename(url, '.html');
   log(`Generate file name: ${pageFilename}.`);
 
   const pageFilepath = buildPath(outputDirpath, pageFilename);

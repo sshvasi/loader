@@ -60,9 +60,10 @@ beforeAll(async () => {
 
 describe('pageLoader', () => {
   test('should create html file with correct name', async () => {
-    const actualFilename = await pageLoader(pageUrl, tmpDirpath);
+    const actualFilepath = await pageLoader(pageUrl, tmpDirpath);
+    const expectedFilepath = buildPath(tmpDirpath, pageFilename);
 
-    expect(actualFilename).toBe(pageFilename);
+    expect(actualFilepath).toBe(expectedFilepath);
   });
 
   test('should load page in output dir and make resource paths relative', async () => {

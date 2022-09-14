@@ -1,5 +1,6 @@
 import cheerio from 'cheerio';
 import prettier from 'prettier';
+import Listr from 'listr';
 import debug from 'debug';
 import { getUrl, load } from './url.js';
 import { urlToDirname, urlToFilename, buildPath } from './paths.js';
@@ -53,17 +54,20 @@ const processAssets = (markup, url) => {
 
 const loadAssets = async (paths, dest) => {
   const promises = paths.map(({ assetUrl, relativePath }) => {
+    const { href } = assetUrl;
     const absolutePath = buildPath(dest, relativePath);
 
-    return load(assetUrl, { responseType: 'arraybuffer' })
-      .then((data) => writeFile(absolutePath, data));
+    return {
+      title: href,
+      task: () => load(assetUrl, { responseType: 'arraybuffer' }).then((data) => writeFile(absolutePath, data)),
+    };
   });
 
-  log('Load assets.');
+  const tasks = new Listr(promises, { concurrent: true, renderer: 'progressBar' });
 
-  const assets = await Promise.all(promises);
+  log('Load assets', { count: paths.length });
 
-  return assets;
+  return tasks.run();
 };
 
 export { processAssets, loadAssets };
