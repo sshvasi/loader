@@ -83,4 +83,41 @@ describe('pageLoader', () => {
       expect(actualFileContent).toBe(content);
     },
   );
+
+  test('should throw error if url is invalid', async () => {
+    const invalidBaseUrl = BASE_URL.replace('x', '');
+    const expectedError = `getaddrinfo ENOTFOUND ${invalidBaseUrl}`;
+
+    nock(invalidBaseUrl).persist().get('/').replyWithError(expectedError);
+
+    await expect(pageLoader(invalidBaseUrl, tmpDirpath)).rejects.toThrow(expectedError);
+  });
+
+  test.each([404, 500])(
+    'should be able to fail request with status code %s',
+    async (code) => {
+      scope.get(`/${code}`).reply(code, '');
+
+      const testUrl = new URL(`/${code}`, BASE_URL).href;
+
+      await expect(pageLoader(testUrl, tmpDirpath))
+        .rejects.toThrow(`Request failed with status code ${code}`);
+    },
+  );
+
+  test('shoult be able to throw file system errors', async () => {
+    const rootDirpath = '/sys';
+    const testUrl = pageUrl.href;
+
+    await expect(pageLoader(testUrl, rootDirpath))
+      .rejects.toThrow(`EACCES: permission denied, open '${rootDirpath}/${pageFilename}'`);
+
+    const filepath = getFixturePath(pageFilename);
+    await expect(pageLoader(testUrl, filepath))
+      .rejects.toThrow(`ENOTDIR: not a directory, open '${filepath}/${pageFilename}'`);
+
+    const notExistingPath = getFixturePath('notExistsPath');
+    await expect(pageLoader(testUrl, notExistingPath))
+      .rejects.toThrow(`ENOENT: no such file or directory, open '${notExistingPath}/${pageFilename}'`);
+  });
 });
