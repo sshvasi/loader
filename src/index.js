@@ -21,7 +21,7 @@ const pageLoader = async (url, outputDirpath = process.cwd()) => {
   await makeAssetsDir(url, outputDirpath);
   await loadAssets(assetPaths, outputDirpath);
 
-  return pageFilename;
+  return pageFilepath;
 };
 
 export default pageLoader;

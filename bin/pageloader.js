@@ -16,7 +16,13 @@ program
   .option('-o, --output [dir]', 'output dir', process.cwd())
   .action((url) => {
     const { output } = program.opts();
-    pageLoader(url, output);
+    pageLoader(url, output)
+      .then((filepath) => console.log(`Page was loaded to ${filepath}`))
+      .catch((error) => {
+        console.error(error.toString());
+        console.log(error.message);
+        process.exit(1);
+      });
   });
 
 program.parse(process.argv);
