@@ -1,8 +1,11 @@
 import cheerio from 'cheerio';
 import prettier from 'prettier';
+import debug from 'debug';
 import { getUrl, load } from './url.js';
 import { urlToDirname, urlToFilename, buildPath } from './paths.js';
 import { writeFile } from './fs.js';
+
+const log = debug('page-loader');
 
 const processAssets = (markup, url) => {
   const { origin } = url;
@@ -41,6 +44,8 @@ const processAssets = (markup, url) => {
     return paths;
   });
 
+  log('Replace asset source paths with relative paths.');
+
   const page = prettier.format($.html(), { parser: 'html' });
 
   return [page, assetPaths];
@@ -53,6 +58,8 @@ const loadAssets = async (paths, dest) => {
     return load(assetUrl, { responseType: 'arraybuffer' })
       .then((data) => writeFile(absolutePath, data));
   });
+
+  log('Load assets.');
 
   const assets = await Promise.all(promises);
 

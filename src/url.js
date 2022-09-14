@@ -1,4 +1,5 @@
 import axios from 'axios';
+import 'axios-debug-log';
 
 const getUrl = (url, base) => new URL(url, base);
 
